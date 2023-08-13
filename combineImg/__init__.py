@@ -4,6 +4,9 @@ from io import BytesIO
 import base64
 import concurrent.futures
 from time import time as timer
+from cachetools import cached, LFUCache
+
+imgCache: LFUCache = LFUCache()
 
 # find the highest res image in an array of images
 def findImageWithMostPixels(imageArray):
@@ -116,10 +119,9 @@ def downloadImage(url):
             pass
     return None
 
+@cached(imgCache)
 def genImageFromURL(urlArray):
     # this method avoids storing the images in disk, instead they're stored in memory
-    # no cache means that they'll have to be downloaded again if the image is requested again
-    # TODO: cache?
     start = timer()
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         imageArray = [executor.submit(downloadImage, url) for url in urlArray]
